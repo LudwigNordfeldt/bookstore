@@ -1,46 +1,30 @@
 const express = require("express");
-const axios = require("axios");
+
+const bookRouter = require("./controllers/books")
+const userRouter = require("./controllers/users")
+
+const mongoose = require("mongoose");
+
+const cors = require("cors")
+
+require("dotenv").config();
 
 const app = express();
-const baseUrl = "https://openlibrary.org/";
+
+const dburl = process.env.mongo
+mongoose.connect(dburl)
 
 app.use(express.static("build"));
+
+app.use(cors())
 
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
   next();
 });
 
-app.get("/books/:request/:subrequest", async (req, res) => {
-  const query = req.query;
-  const reqType = req.params.request.concat(
-    "/",
-    req.params.subrequest,
-    ".json"
-  );
-  let queryUrl = "?";
-
-  for (const [key, value] of Object.entries(query)) {
-    queryUrl = queryUrl.concat(key, "=", value, "&");
-  }
-
-  const response = await axios.get(baseUrl.concat(reqType, queryUrl));
-  res.send(response.data);
-});
-
-app.get("/books/:type", async (req, res) => {
-  const query = req.query;
-  const reqType = req.params.type.concat(".json");
-  let queryUrl = "?";
-
-  for (const [key, value] of Object.entries(query)) {
-    if (value.length) {
-      queryUrl = queryUrl.concat(key, "=", value, "&");
-    }
-  }
-
-  const response = await axios.get(baseUrl.concat(reqType, queryUrl));
-  res.send(response.data);
-});
+app.use(express.json());
+app.use("/books", bookRouter)
+app.use("/users", userRouter)
 
 module.exports = app;
